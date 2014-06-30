@@ -1,8 +1,8 @@
 Logomatic v2 Serial SD Datalogger (FAT32)
 ========================================
 
-[![Logomatic v2 (FAT 32)](https://dlnmh9ip6v2uc.cloudfront.net/images/products/1/0/2/1/6/10216-01b_i_ma.jpg)  
-*Logomatic v2 FAT32(WIG-12772)*](https://cdn.sparkfun.com//assets/parts/9/5/4/5/12772-01.jpg)
+[![Logomatic v2 (FAT 32)](https://cdn.sparkfun.com//assets/parts/9/5/4/5/12772-01.jpg)  
+*Logomatic v2 FAT32(WIG-12772)*](https://www.sparkfun.com/products/12772)
 
 The Logomatic is a great data logger that appears as a flash drive on any operating system. Logs are created
 in FAT32 format on the microSD media and can be downloaded quickly over a USB connection by dragging and dropping 
