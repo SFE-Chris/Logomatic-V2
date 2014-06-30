@@ -16,7 +16,7 @@
 
 //Needed for main function calls
 #include "main_msc.h"
-#include "fat16.h"
+#include "fat.h"
 #include "armVIC.h"
 #include "itoa.h"
 #include "rootdir.h"
@@ -38,8 +38,8 @@ short RX_in = 0;
 char get_frame = 0;
 
 signed int stringSize;
-struct fat16_file_struct* handle;
-struct fat16_file_struct * fd;
+struct fat_file_struct* handle;
+struct fat_file_struct * fd;
 char stringBuf[256];
 
 // Default Settings
@@ -107,9 +107,10 @@ int main (void)
 	
 	Initialize();
 	
+	setup_uart0(9600, 0);
+
 	fat_initialize();		
 
-	setup_uart0(9600, 0);
 
 	// Flash Status Lights
 	for(i = 0; i < 5; i++)
@@ -125,7 +126,7 @@ int main (void)
 	Log_init();
 
 	count++;
-	string_printf(name,"LOF%02d.txt",count);
+	string_printf(name,"LOG%02d.txt",count);
 	while(root_file_exists(name))
 	{
 		count++;
@@ -936,9 +937,9 @@ void Log_init(void)
 	{
 		//rprintf("\n\rFound LOGcon.txt\n");
 		fd = root_open("LOGCON.txt");
-		stringSize = fat16_read_file(fd, (unsigned char *)stringBuf, 512);
+		stringSize = fat_read_file(fd, (unsigned char *)stringBuf, 512);
 		stringBuf[stringSize] = '\0';
-		fat16_close_file(fd);
+		fat_close_file(fd);
 	}
 	else
 	{
@@ -960,7 +961,7 @@ void Log_init(void)
 
 		strcpy(stringBuf, "MODE = 0\r\nASCII = N\r\nBaud = 4\r\nFrequency = 100\r\nTrigger Character = $\r\nText Frame = 100\r\nAD1.3 = N\r\nAD0.3 = N\r\nAD0.2 = N\r\nAD0.1 = N\r\nAD1.2 = N\r\nAD0.4 = N\r\nAD1.7 = N\r\nAD1.6 = N\r\nSaftey On = Y\r\n");
 		stringSize = strlen(stringBuf);
-		fat16_write_file(fd, (unsigned char*)stringBuf, stringSize);
+		fat_write_file(fd, (unsigned char*)stringBuf, stringSize);
 		sd_raw_sync();
 	}
 
@@ -1147,7 +1148,7 @@ void mode_action(void)
 		{
 			stat(0,ON);
 				
-			if(fat16_write_file(handle,(unsigned char *)RX_array1, stringSize) < 0)
+			if(fat_write_file(handle,(unsigned char *)RX_array1, stringSize) < 0)
 			{
 				while(1)
 				{
@@ -1169,7 +1170,7 @@ void mode_action(void)
 		{
 			stat(1,ON);
 			
-			if(fat16_write_file(handle,(unsigned char *)RX_array2, stringSize) < 0)
+			if(fat_write_file(handle,(unsigned char *)RX_array2, stringSize) < 0)
 			{
 				while(1)
 				{
@@ -1193,12 +1194,12 @@ void mode_action(void)
 
 			if(RX_in < 512)
 			{
-				fat16_write_file(handle, (unsigned char *)RX_array1, RX_in);
+				fat_write_file(handle, (unsigned char *)RX_array1, RX_in);
 				sd_raw_sync();
 			}
 			else if(RX_in >= 512)
 			{
-				fat16_write_file(handle, (unsigned char *)RX_array2, RX_in - 512);
+				fat_write_file(handle, (unsigned char *)RX_array2, RX_in - 512);
 				sd_raw_sync();
 			}
 			while(1)

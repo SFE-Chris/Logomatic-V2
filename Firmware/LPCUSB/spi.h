@@ -9,8 +9,6 @@ U8		SPISend(U8 outgoing);
 void	SPISendN(U8 *pbBuf, int iLen);
 void	SPIRecvN(U8 *pbBuf, int iLen);
 
-//#define SS_PORT_1
-//#define SPI_SS_PIN	24
 #define SS_PORT_0
 #define SPI_SS_PIN	7
 

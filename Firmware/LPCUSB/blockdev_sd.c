@@ -25,6 +25,10 @@
     2006, Bertrik Sikken, modified for LPCUSB
 */
 
+/*
+    SDHC/FAT32 support added 10/10/2011 by Magnus Karlsson 
+*/
+
 #include "type.h"
 
 #include <stdio.h>
@@ -35,12 +39,18 @@
 
 #define CMD_GOIDLESTATE     0
 #define CMD_SENDOPCOND      1
+#define CMD_SENDIFCOND      8
 #define CMD_READCSD         9
 #define CMD_READCID         10
 #define CMD_SENDSTATUS      13
 #define CMD_READSINGLEBLOCK 17
 #define CMD_WRITE           24
 #define CMD_WRITE_MULTIPLE  25
+#define CMD_SDSENDOPCOND    41
+#define CMD_APPCMD          55
+#define CMD_READOCR         58
+
+U8 highCapacity;
 
 static void Command(U8 cmd, U32 param)
 {
@@ -53,7 +63,12 @@ static void Command(U8 cmd, U32 param)
     abCmd[3] = (U8)(param >> 16);
     abCmd[4] = (U8)(param >> 8);
     abCmd[5] = (U8)(param);
-    abCmd[6] = 0x95;            /* Checksum (should be only valid for first command (0) */
+    if (cmd == CMD_GOIDLESTATE)
+        abCmd[6] = 0x95;            /* Valid CRC for CMD0(0)*/
+    else if (cmd == CMD_SENDIFCOND)
+        abCmd[6] = 0x87;            /* Valid CRC for CMD8(0x1AA)  */
+    else 
+        abCmd[6] = 0x01;            /* Dummy CRC + Stop*/
     abCmd[7] = 0xff;            /* eat empty command - response */
 
     SPISendN(abCmd, 8);
@@ -103,12 +118,14 @@ static void Resp8bError(U8 value)
 /* ****************************************************************************
  calculates size of card from CSD
  (extension by Martin Thomas, inspired by code from Holger Klabunde)
+ CSD version 2.0 code by Magnus Karlsson
  */
 int BlockDevGetSize(U32 *pdwDriveSize)
 {
     U8 cardresp, i, by;
     U8 iob[16];
-    U16 c_size, c_size_mult, read_bl_len;
+    U32 c_size, blocks; 
+    U16 c_size_mult, read_bl_len;
 
     Command(CMD_READCSD, 0);
     do
@@ -128,21 +145,35 @@ int BlockDevGetSize(U32 *pdwDriveSize)
     SPISend(0xff);
     SPISend(0xff);
 
-    c_size = iob[6] & 0x03;     // bits 1..0
-    c_size <<= 10;
-    c_size += (U16) iob[7] << 2;
-    c_size += iob[8] >> 6;
+    if ((iob[0] & 0x80) == 0x80)
+    {
+        return -1; // Illegal CSD version data
+    }
+    else if ((iob[0] & 0x40) == 0) // CSD version 1.0
+    {
+        c_size = iob[6] & 0x03;     // bits 1..0
+        c_size <<= 10;
+        c_size += (U16) iob[7] << 2;
+        c_size += iob[8] >> 6;
 
-    by = iob[5] & 0x0F;
-    read_bl_len = 1 << by;
+        by = iob[5] & 0x0F;
+        read_bl_len = 1 << by;
 
-    by = iob[9] & 0x03;
-    by <<= 1;
-    by += iob[10] >> 7;
+        by = iob[9] & 0x03;
+        by <<= 1;
+        by += iob[10] >> 7;
 
-    c_size_mult = 1 << (2 + by);
+        c_size_mult = 1 << (2 + by);
+        blocks = ((c_size + 1) * (U32) c_size_mult *(U32) read_bl_len) / 512;
+    }
+    else // CSD version 2.0
+    {
+        c_size = (iob[9] | (iob[8] << 8) | (iob[7] << 16)) & 0x003fffff;
+        blocks = (c_size + 1) * 1024;
+    }
 
-    *pdwDriveSize = (U32) (c_size + 1) * (U32) c_size_mult *(U32) read_bl_len;
+    *pdwDriveSize = (blocks);
+    rprintf("Drive size: %u blocks\n", blocks);
 
     return 0;
 }
@@ -154,6 +185,20 @@ static U16 Resp16b(void)
     U16 resp;
 
     resp = (Resp8b() << 8) & 0xff00;
+    resp |= SPISend(0xff);
+
+    return resp;
+}
+
+/*****************************************************************************/
+
+static U32 Resp32b(void)
+{
+    U32 resp;
+
+    resp = SPISend(0xff) << 24;
+    resp |= (SPISend(0xff) << 16);
+    resp |= (SPISend(0xff) << 8);
     resp |= SPISend(0xff);
 
     return resp;
@@ -200,6 +245,7 @@ int BlockDevInit(void)
 {
     int i;
     U8 resp;
+    U32 resp32;
 
     SPIInit();              /* init at low speed */
 
@@ -227,27 +273,89 @@ int BlockDevInit(void)
         }
     }
 
-    /* Wait till card is ready initialising (returns 0 on CMD_1) */
-    /* Try up to 32000 times. */
-    i = 32000;
-    do
-    {
-        Command(CMD_SENDOPCOND, 0);
+    highCapacity = 0;
 
+    Command(CMD_SENDIFCOND, 0x1AA);
+    resp = Resp8b();
+    if (resp == 0x01) // SD Version 2.x
+    {
+        rprintf("SD Version 2.x card\n");
+        resp32 = Resp32b();
+        if ((resp32 & 0x00000fff) != 0x1AA)
+        {
+             rprintf("Bad CMD8 response\n");
+             return -4;
+        }
+        rprintf("Waiting for card ready");
+        /* Wait till card is ready initialising (returns 0 on ACMD_41) */
+        /* Try up to 32000 times. */
+        i = 32000;
+        do
+        {
+            Command(CMD_APPCMD, 0);
+            resp = Resp8b();
+            if (resp != 0)
+            {
+                Resp8bError(resp);
+            }
+            Command(CMD_SDSENDOPCOND, 0x40000000); // ACMD41 with HCS bit set
+            resp = Resp8b();
+            if (resp != 0)
+            {
+                Resp8bError(resp);
+            }
+        }
+        while (resp == 1 && i--);
+
+        if (resp != 0)
+        {
+            Resp8bError(resp);
+            return -3;
+        }
+        
+        // Issue CMD58 to read OCR
+        Command(CMD_READOCR, 0);
         resp = Resp8b();
         if (resp != 0)
         {
             Resp8bError(resp);
         }
+        resp32 = Resp32b();
+        if (resp32 & 0x40000000) // check the CCS bit
+        {
+            rprintf("High capacity SD card detected\n");
+            highCapacity = 1; // high capacity card
+        }
+        else
+        {
+            rprintf("Standard capacity SD card detected\n");
+        }
     }
-    while (resp == 1 && i--);
-
-    if (resp != 0)
+    else // SD version 1.x
     {
-        Resp8bError(resp);
-        return -3;
+        /* Wait till card is ready initialising (returns 0 on CMD_1) */
+        /* Try up to 32000 times. */
+        i = 32000;
+        do
+        {
+            Command(CMD_SENDOPCOND, 0);
+            resp = Resp8b();
+            if (resp != 0)
+            {
+                Resp8bError(resp);
+            }
+        }
+        while (resp == 1 && i--);
+
+        if (resp != 0)
+        {
+            Resp8bError(resp);
+            return -3;
+        }
     }
 
+
+    
     /* increase speed after init */
     SPISetSpeed(SPI_PRESCALE_MIN);
 
@@ -289,7 +397,10 @@ int BlockDevWrite(U32 dwAddress, U8 * pbBuf)
     U32 place;
     U16 t = 0;
 
-    place = 512 * dwAddress;
+    if (!highCapacity)
+        place = 512 * dwAddress;
+    else
+        place = dwAddress;
     Command(CMD_WRITE, place);
 
     Resp8b();               /* Card response */
@@ -330,7 +441,10 @@ int BlockDevRead(U32 dwAddress, U8 * pbBuf)
     U16 fb_timeout = 0xffff;
     U32 place;
 
-    place = 512 * dwAddress;
+    if (!highCapacity)
+        place = 512 * dwAddress;
+    else
+        place = dwAddress;
     Command(CMD_READSINGLEBLOCK, place);
 
     cardresp = Resp8b();        /* Card response */

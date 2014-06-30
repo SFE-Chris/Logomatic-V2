@@ -1,7 +1,6 @@
+#	BOOTLOADER Makefile
 
-IN2_COMMON = ..
-LIBPATH = ../lib/
-SCREENPATH = ../screens/
+LIBPATH = ../LIB/
 USBPATH = ../LPCUSB/
 
 FLASH_TOOL = LPC12
@@ -13,7 +12,7 @@ MCU      = arm7tdmi-s
 SUBMDL   = LPC2138
 #THUMB    = -mthumb
 
-#This is needed to run IAP function call stuff
+#THUMB_IW is needed for IAP routines
 THUMB_IW = -mthumb-interwork
 
 ## Create ROM-Image (final)
@@ -36,25 +35,38 @@ TARGET = main
 # use file-extension c for "c-only"-files
 SRC = $(TARGET).c 
 
+#Functions unique to the bootloader build
+SRC += system.c
+
 #Needed most of the time for basic functions
 SRC += $(LIBPATH)syscalls.c 
 SRC += $(LIBPATH)rprintf.c 
-SRC += $(LIBPATH)string_printf.c 
-SRC += $(LIBPATH)serial.c 
+SRC += $(LIBPATH)serial.c
+
+#Functions for bootloading
+SRC += $(LIBPATH)firmware.c
 
 #Functions for SD interaction
-SRC += $(LIBPATH)rootdir.c 
-SRC += $(LIBPATH)sd_raw.c 
-SRC += $(LIBPATH)fat.c 
+SRC += $(LIBPATH)rootdir.c
+SRC += $(LIBPATH)sd_raw.c
+SRC += $(LIBPATH)fat.c
 SRC += $(LIBPATH)partition.c 
-SRC += $(LIBPATH)itoa.c
-SRC += $(LIBPATH)byteordering.c
+SRC += $(LIBPATH)byteordering.c 
 
-SRC += $(USBPATH)armVIC.c
+#Functions for USB Mass Storage Device
+SRC += $(USBPATH)main_msc.c 
+SRC += $(USBPATH)msc_bot.c 
+SRC += $(USBPATH)msc_scsi.c 
+SRC += $(USBPATH)blockdev_sd.c 
+SRC += $(USBPATH)lpc2000_spi.c
+SRC += $(USBPATH)usbinit.c 
+SRC += $(USBPATH)usbhw_lpc.c 
+SRC += $(USBPATH)usbcontrol.c 
+SRC += $(USBPATH)usbstdreq.c
 
 # List C source files here which must be compiled in ARM-Mode.
 # use file-extension c for "c-only"-files
-SRCARM = $(LIBPATH)irq.c
+#SRCARM = $(WINARM_COMMON)/Common_WinARM/src/irq.c
 
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
@@ -75,15 +87,14 @@ CPPSRCARM =
 ASRC = 
 
 # List Assembler source files here which must be assembled in ARM-Mode..
-ASRCARM = Startup.S
-#ASRCARM = crt.S
+#ASRCARM = $(WINARM_COMMON)\Common_WinARM/src/Startup.S
+ASRCARM = crt.S
 #ASRCARM += $(WINARM_COMMON)\Common_WinARM/src/swi_handler.S
-
 
 ## Output format. (can be ihex or binary)
 ## (binary i.e. for openocd and SAM-BA, hex i.e. for lpc21isp and uVision)
-#FORMAT = ihex
-FORMAT = binary
+FORMAT = ihex
+#FORMAT = binary
 
 # Optimization level, can be [0, 1, 2, 3, s]. 
 # 0 = turn off optimization. s = optimize for size.
@@ -105,9 +116,9 @@ DEBUG = dwarf-2
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
-EXTRAINCDIRS = $(IN2_COMMON)/lib
-EXTRAINCDIRS += $(IN2_COMMON)/screens
-EXTRAINCDIRS += $(IN2_COMMON)/LPCUSB
+EXTRAINCDIRS = $(LPCPATH)
+EXTRAINCDIRS +=  $(LIBPATH)
+EXTRAINCDIRS +=  $(USBPATH)
 
 # List any extra directories to look for library files here.
 #     Each directory must be seperated by a space.
@@ -211,11 +222,10 @@ LDFLAGS += $(patsubst %,-l%,$(EXTRA_LIBS))
 
 # Set Linker-Script Depending On Selected Memory and Controller
 
-
 #This line is used if you want to load main.hex into 0x00
-#LDFLAGS +=-Tlpc2138.cmd
-LDFLAGS += -Tmain_memory_block.ld 
-
+LDFLAGS +=-Tlpc2138.cmd
+#This line is used if the ARM Bootloader is used (0x10000)
+#LDFLAGS += -Tmain_mem_block.ld 
 
 # ---------------------------------------------------------------------------
 # Flash-Programming support using lpc21isp by Martin Maurer 
@@ -224,7 +234,7 @@ LDFLAGS += -Tmain_memory_block.ld
 # Settings and variables:
 #LPC21ISP = lpc21isp
 LPC21ISP = lpc21isp
-LPC21ISP_PORT = com1
+LPC21ISP_PORT = com6
 LPC21ISP_BAUD = 38400
 LPC21ISP_XTAL = 12000
 LPC21ISP_FLASHFILE = $(TARGET).hex
@@ -298,21 +308,19 @@ ALL_ASFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. -x assembler-with-cpp $(ASFLAGS)
 # Default target.
 all: begin gccversion sizebefore build sizeafter finished end
 
-#ifeq ($(FORMAT),ihex)
-#build: elf hex lss sym
-#hex: $(TARGET).hex
-#IMGEXT=hex
-#else 
-#ifeq ($(FORMAT),binary)
-build: elf bin lss sym hex FW.SFE
-
-#bin: $(TARGET).bin
+ifeq ($(FORMAT),ihex)
+build: elf hex lss sym
 hex: $(TARGET).hex
-#IMGEXT=bin
-#else 
-#$(error "$(MSG_FORMATERROR) $(FORMAT)")
-#endif
-#endif
+IMGEXT=hex
+else 
+ifeq ($(FORMAT),binary)
+build: elf bin lss sym
+bin: $(TARGET).bin
+IMGEXT=bin
+else 
+$(error "$(MSG_FORMATERROR) $(FORMAT)")
+endif
+endif
 
 elf: $(TARGET).elf
 lss: $(TARGET).lss 
@@ -377,19 +385,13 @@ endif
 %.hex: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O ihex $< $@
+	$(OBJCOPY) -O $(FORMAT) $< $@
 	
 # Create final output file (.bin) from ELF output file.
 %.bin: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O binary $< $@
-
-# Create final output file (.bin) from ELF output file.
-FW.SFE: main.elf
-	@echo
-	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) -O $(FORMAT) $< $@
 
 
 # Create extended listing file from ELF output file.
@@ -461,7 +463,7 @@ $(AOBJARM) : %.o : %.S
 	$(CC) -c $(ALL_ASFLAGS) $< -o $@
 
 prog_lin:
-	./lpc21isp -control main.hex /dev/ttyS0 38400 1200
+	../Main/lpc21isp -control main.hex /dev/ttyS0 38400 12000
 
 # Target: clean project.
 clean: begin clean_list finished end
@@ -496,12 +498,14 @@ clean_list :
 	$(REMOVE) $(CPPSRC:.cpp=.d)
 	$(REMOVE) $(CPPSRCARM:.cpp=.s) 
 	$(REMOVE) $(CPPSRCARM:.cpp=.d)
-	$(REMOVE) FW.SFE
 	$(REMOVE) .dep/*
+
 
 # Include the dependency files.
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
 
+
 # Listing of phony targets.
 .PHONY : all begin finish end sizebefore sizeafter gccversion \
 build elf hex bin lss sym clean clean_list program
+

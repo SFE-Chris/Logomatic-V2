@@ -1,16 +1,16 @@
 
 #include "rootdir.h"
-#include "fat16.h"
+#include "fat.h"
 #include "partition.h"
 #include "sd_raw.h"
 #include <stdio.h>
 #include "rprintf.h"
 
-struct fat16_dir_entry_struct dir_entry;
-struct fat16_fs_struct* fs;
+struct fat_dir_entry_struct dir_entry;
+struct fat_fs_struct* fs;
 struct partition_struct* partition;
-struct fat16_dir_struct* dd;
-struct fat16_file_struct * fd;
+struct fat_dir_struct* dd;
+struct fat_file_struct * fd;
 
 int openroot(void)
 {
@@ -18,6 +18,7 @@ int openroot(void)
     partition = partition_open((device_read_t) sd_raw_read,
                                (device_read_interval_t) sd_raw_read_interval,
                                (device_write_t) sd_raw_write,
+                               (device_write_interval_t) sd_raw_write_interval,
                                0);
 
     if(!partition)
@@ -28,6 +29,7 @@ int openroot(void)
         partition = partition_open((device_read_t) sd_raw_read,
                                    (device_read_interval_t) sd_raw_read_interval,
                                    (device_write_t) sd_raw_write,
+                                   (device_write_interval_t) sd_raw_write_interval,
                                    -1);
         if(!partition)
         {
@@ -37,7 +39,7 @@ int openroot(void)
     }
 
     /* open file system */
-    fs = fat16_open(partition);
+    fs = fat_open(partition);
     if(!fs)
     {
         rprintf("opening filesystem failed\n\r");
@@ -45,9 +47,9 @@ int openroot(void)
     }
 
     /* open root directory */
-    fat16_get_dir_entry_of_path(fs, "/", &dir_entry);
+    fat_get_dir_entry_of_path(fs, "/", &dir_entry);
 
-    dd = fat16_open_dir(fs, &dir_entry);
+    dd = fat_open_dir(fs, &dir_entry);
     if(!dd)
     {
         rprintf("opening root directory failed\n\r");
@@ -63,9 +65,9 @@ int root_file_exists(char* name)
 }
 
 /* returns NULL if error, pointer if file opened */
-struct fat16_file_struct * root_open_new(char* name)
+struct fat_file_struct * root_open_new(char* name)
 {
-    if(fat16_create_file(dd,name,&dir_entry))
+    if(fat_create_file(dd,name,&dir_entry))
     {
         return(open_file_in_dir(fs,dd,name));
     }
@@ -75,12 +77,12 @@ struct fat16_file_struct * root_open_new(char* name)
     }
 }
 
-struct fat16_file_struct * root_open(char* name)
+struct fat_file_struct * root_open(char* name)
 {
     return(open_file_in_dir(fs,dd,name));
 }
 
-uint8_t print_disk_info(const struct fat16_fs_struct* disk_fs)
+uint8_t print_disk_info(const struct fat_fs_struct* disk_fs)
 {
     if(!disk_fs)
         return 0;
@@ -101,7 +103,7 @@ uint8_t print_disk_info(const struct fat16_fs_struct* disk_fs)
     rprintf("copy:   %d\n\r", disk_info.flag_copy);
     rprintf("wr.pr.: %d/%d\n\r", disk_info.flag_write_protect_temp, disk_info.flag_write_protect);
     rprintf("format: %d\n\r", disk_info.format);
-    rprintf("free:   %ld/%ld\n\r", fat16_get_fs_free(disk_fs), fat16_get_fs_size(disk_fs));
+    rprintf("free:   %ld/%ld\n\r", fat_get_fs_free(disk_fs), fat_get_fs_size(disk_fs));
 //    set_output(temp);
     return 1;
 }
@@ -127,7 +129,7 @@ char rootDirectory_files_stream(int reset)
     /* If reset, we need to reset the dir */
     if(reset)
     {
-        fat16_reset_dir(dd);
+        fat_reset_dir(dd);
         return 0;
     }
 
@@ -138,7 +140,7 @@ char rootDirectory_files_stream(int reset)
        */
     if(idx == 0)
     {
-        if(fat16_read_dir(dd,&dir_entry)==0)
+        if(fat_read_dir(dd,&dir_entry)==0)
         {
             return '\0';
         }
@@ -170,8 +172,8 @@ int rootDirectory_files(char* buf, int len)
     int i;
     int num=0;
     /* Loop will walk through every file in directory dd */
-    fat16_reset_dir(dd);
-    while(fat16_read_dir(dd,&dir_entry))
+    fat_reset_dir(dd);
+    while(fat_read_dir(dd,&dir_entry))
     {
         i = 0;
         /* Spin through the filename */
@@ -203,11 +205,11 @@ int rootDirectory_files(char* buf, int len)
 
 void root_format(void)
 {
-    fat16_reset_dir(dd);
-    while(fat16_read_dir(dd,&dir_entry))
+    fat_reset_dir(dd);
+    while(fat_read_dir(dd,&dir_entry))
     {
-        fat16_delete_file(fs,&dir_entry);
-        fat16_reset_dir(dd);
+        fat_delete_file(fs,&dir_entry);
+        fat_reset_dir(dd);
     }
 }
 
@@ -215,7 +217,7 @@ int root_delete(char* filename)
 {
     if(find_file_in_dir(fs,dd,filename,&dir_entry))
     {
-        fat16_delete_file(fs,&dir_entry);
+        fat_delete_file(fs,&dir_entry);
         return 0;
     }
     return 1;

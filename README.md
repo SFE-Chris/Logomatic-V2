@@ -1,17 +1,26 @@
-Logomatic v2 Serial SD Datalogger
+Logomatic v2 Serial SD Datalogger (FAT32)
 ========================================
 
-[![Logomatic v2](https://dlnmh9ip6v2uc.cloudfront.net/images/products/1/0/2/1/6/10216-01b_i_ma.jpg)  
-*Logomatic v2(WIG-10216)*](https://www.sparkfun.com/products/10216)
+[![Logomatic v2 (FAT 32)](https://dlnmh9ip6v2uc.cloudfront.net/images/products/1/0/2/1/6/10216-01b_i_ma.jpg)  
+*Logomatic v2 FAT32(WIG-12772)*](https://cdn.sparkfun.com//assets/parts/9/5/4/5/12772-01.jpg)
 
+The Logomatic is a great data logger that appears as a flash drive on any operating system. Logs are created
+in FAT32 format on the microSD media and can be downloaded quickly over a USB connection by dragging and dropping 
+the text files from the device. The board has a built-in RTC and 10 available GPIO pins. 
 
 Repository Contents
 -------------------
 * **/Firmware** - Firmware that comes pre-installed on the Logomatic
 * **/Hardware** - All Eagle design files (.brd, .sch)
+* **/Production** - Test bed files and production panel files
 
+Product Versions
+----------------
+* [WIG-10216](https://www.sparkfun.com/products/10216)- Logomatic v2 with miniB USB connector and FAT16 programming. 
 
 License Information
 -------------------
-The hardware is released under [Creative Commons Share-alike 3.0](http://creativecommons.org/licenses/by-sa/3.0/).  
-All other code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday ([Beerware license](http://en.wikipedia.org/wiki/Beerware)).
+The hardware is released under [Creative Commons ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/).
+The code is beerware; if you see me (or any other SparkFun employee) at the local, and you've found our code helpful, please buy us a round!
+
+Distributed as-is; no warranty is given.

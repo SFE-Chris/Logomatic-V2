@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include "LPC214x.h"
 
-#include "fat16.h"
+#include "fat.h"
 #include "rootdir.h"
 #include "system.h"
 #include "sd_raw.h"
@@ -74,7 +74,7 @@ char readbuf[READBUFSIZE];
 
 int load_fw(char* filename)
 {
-    struct fat16_file_struct * fd;
+    struct fat_file_struct * fd;
     int read;
     int i;
     char* addy;
@@ -96,7 +96,7 @@ int load_fw(char* filename)
     }
 
     /* Read the file contents, and print them out */
-    while( (read=fat16_read_file(fd,(unsigned char*)readbuf,READBUFSIZE)) > 0 )
+    while( (read=fat_read_file(fd,(unsigned char*)readbuf,READBUFSIZE)) > 0 )
     {
 
         // Print Data to UART (DEBUG)
@@ -171,7 +171,7 @@ int load_fw(char* filename)
 
     /* Close the file! */
     sd_raw_sync();
-    fat16_close_file(fd);
+    fat_close_file(fd);
     root_delete(filename);
 
     return 0;

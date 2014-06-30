@@ -22,6 +22,9 @@
     This layer depends directly on the blockdev layer.
 */
 
+/*
+    SDHC/FAT32 support added 10/10/2011 by Magnus Karlsson 
+*/
 
 #include <string.h>     // memcpy
 
@@ -266,7 +269,7 @@ U8 * SCSIHandleData(U8 *pbCDB, int iCDBLen, U8 *pbData, U32 dwOffset)
         // get size of drive (bytes)
             BlockDevGetSize(&dwNumBlocks);
             // calculate highest LBA
-            dwMaxBlock = (dwNumBlocks - 1) / 512;
+            dwMaxBlock = (dwNumBlocks - 1);
 
             pbData[0] = (dwMaxBlock >> 24) & 0xFF;
             pbData[1] = (dwMaxBlock >> 16) & 0xFF;
