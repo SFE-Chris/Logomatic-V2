@@ -93,7 +93,7 @@ embedded assemblers, "Rules for using __asm and asm keywords. */
 #endif
 
 #if NESTED_INTERRUPT 
-#warning "Macros not tested successfully with arm-elf-gcc
+#warning "Macros not tested successfully with arm-elf-gcc"
 #define IENABLE asm volatile( \
  "MRS     LR, SPSR \n"  \
  "STMFD   SP!, {LR} \n" \
