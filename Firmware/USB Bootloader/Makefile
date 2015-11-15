@@ -1,6 +1,6 @@
 #	BOOTLOADER Makefile
 
-LIBPATH = ../LIB/
+LIBPATH = ../lib/
 USBPATH = ../LPCUSB/
 
 FLASH_TOOL = LPC12
