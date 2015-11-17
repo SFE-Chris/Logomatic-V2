@@ -59,13 +59,13 @@ int openroot(void)
 }
 
 /* returns 1 if file exists, 0 else */
-int root_file_exists(char* name)
+int root_file_exists(const char* name)
 {
     return(find_file_in_dir(fs,dd,name,&dir_entry));
 }
 
 /* returns NULL if error, pointer if file opened */
-struct fat_file_struct * root_open_new(char* name)
+struct fat_file_struct * root_open_new(const char* name)
 {
     if(fat_create_file(dd,name,&dir_entry))
     {
@@ -77,7 +77,7 @@ struct fat_file_struct * root_open_new(char* name)
     }
 }
 
-struct fat_file_struct * root_open(char* name)
+struct fat_file_struct * root_open(const char* name)
 {
     return(open_file_in_dir(fs,dd,name));
 }
@@ -213,7 +213,7 @@ void root_format(void)
     }
 }
 
-int root_delete(char* filename)
+int root_delete(const char* filename)
 {
     if(find_file_in_dir(fs,dd,filename,&dir_entry))
     {
