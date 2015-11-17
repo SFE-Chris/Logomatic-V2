@@ -1153,10 +1153,10 @@ void mode_action(void)
 				while(1)
 				{
 					stat(0,ON);
-					for(j = 0; j < 500000; j++)
+					for(j = 0; j < 500000; j++);
 					stat(0,OFF);
 					stat(1,ON);
-					for(j = 0; j < 500000; j++)
+					for(j = 0; j < 500000; j++);
 					stat(1,OFF);
 				}
 			}
@@ -1175,10 +1175,10 @@ void mode_action(void)
 				while(1)
 				{
 					stat(0,ON);
-					for(j = 0; j < 500000; j++)
+					for(j = 0; j < 500000; j++);
 					stat(0,OFF);
 					stat(1,ON);
-					for(j = 0; j < 500000; j++)
+					for(j = 0; j < 500000; j++);
 					stat(1,OFF);
 				}
 			}
