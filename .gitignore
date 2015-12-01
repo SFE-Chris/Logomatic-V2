@@ -1,4 +1,25 @@
 #################
+## SparkFun Useful stuff
+#################
+
+## AVR Development
+*.eep
+*.elf
+*.lst
+*.lss
+*.sym
+*.d
+*.o
+*.srec
+*.map
+
+## Notepad++ backup files
+*.bak
+
+## BOM files
+*bom*
+
+#################
 ## Eclipse
 #################
 
@@ -167,20 +188,7 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
-# Mac crap
+#############
+## Mac OS
+#############
 .DS_Store
-
-############
-## Linux
-############
-
-*~
-.dep
-*.o
-*.map
-*.sym
-*.lst
-*.lss
-*.elf
-*.hex
-FW.SFE
