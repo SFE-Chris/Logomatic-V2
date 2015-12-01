@@ -1,6 +1,6 @@
 /******************************************************************************/
-/*                							                                  */
-/*		  			Copyright Spark Fun Electronics                           */
+/*                                                                            */
+/*                     Copyright Spark Fun Electronics                        */
 /******************************************************************************/
 #include "system.h"
 #include "LPC214x.h"
@@ -36,7 +36,8 @@ void UNDEF_Routine (void)
 {
 };
 
-//Short delay
+//BHW TODO: This is bad and will vary depending on interrupts etc
+// Short delay
 void delay_ms(int count)
 {
     int i;
@@ -52,8 +53,8 @@ void boot_up(void)
     //Initialize the MCU clock PLL
     system_init();
 
-	IODIR0 |= (1 << 31);
-	IOCLR0 |= (1 << 31); //Turn on USB LED
+  IODIR0 |= (1 << 31);
+  IOCLR0 |= (1 << 31); //Turn on USB LED
 
     //Init UART0 for debug
     PINSEL0 |= 0x00000005; //enable uart0
@@ -66,7 +67,7 @@ void boot_up(void)
     rprintf_devopen(putc_serial0); 
     rprintf("\n\n\nUSB Bootloader v1.1\n");
 
-	//IOSET0 |= (1 << 31); //Turn off USB LED
+  //IOSET0 |= (1 << 31); //Turn off USB LED
 }
 
 /**********************************************************
@@ -101,10 +102,12 @@ void system_init(void)
     VPBDIV=0x1;
 }
 
+// Make values in PLL control & configure registers take effect 
 void feed(void)
 {
-    PLLFEED=0xAA;
-    PLLFEED=0x55;
+  // Interrupts must be disabled to make consecutive APB bus cycles
+  PLLFEED=0xAA;
+  PLLFEED=0x55;
 }
 
 void reset(void)

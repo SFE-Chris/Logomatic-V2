@@ -268,7 +268,7 @@ static void UART0ISR(void)
 
   U0IIR; // Have to read this to clear the interrupt 
 
-  VICVectAddr = 0;
+  VICVectAddr = 0;  // Acknowledge interrupt
   
 }
 
@@ -868,7 +868,7 @@ static void MODE2ISR(void)
     }
   }
 
-  VICVectAddr= 0;
+  VICVectAddr = 0;  // Acknowledge interrupt
 }
 
 void FIQ_Routine(void)
@@ -876,7 +876,7 @@ void FIQ_Routine(void)
   int j;
 
   stat(0,ON);
-  for(j = 0; j < 5000000; j++);
+  for(j = 0; j < 5000000; j++); // TODO: Why are we using a blocking delay n ISR
   stat(0,OFF);
   U0RBR;  // Trash oldest byte in UART0 Rx FiFO Why??
 
