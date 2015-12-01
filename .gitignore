@@ -169,3 +169,18 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+
+############
+## Linux
+############
+
+*~
+.dep
+*.o
+*.map
+*.sym
+*.lst
+*.lss
+*.elf
+*.hex
+FW.SFE

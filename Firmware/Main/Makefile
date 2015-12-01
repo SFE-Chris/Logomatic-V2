@@ -242,13 +242,14 @@ LPC21ISP_CONTROL = -control
 ## DIRAVRUTILS = $(DIRAVR)/utils/bin/
 
 # Define programs and commands.
+TARGET_PREFIX=arm-elf-
 SHELL = sh
-CC = arm-elf-gcc
-CPP = arm-elf-g++
-OBJCOPY = arm-elf-objcopy
-OBJDUMP = arm-elf-objdump
-SIZE = arm-elf-size
-NM = arm-elf-nm
+CC = $(TARGET_PREFIX)gcc
+CPP = $(TARGET_PREFIX)g++
+OBJCOPY = $(TARGET_PREFIX)objcopy
+OBJDUMP = $(TARGET_PREFIX)objdump
+SIZE = $(TARGET_PREFIX)size
+NM = $(TARGET_PREFIX)nm
 REMOVE = rm -f
 COPY = cp
 
