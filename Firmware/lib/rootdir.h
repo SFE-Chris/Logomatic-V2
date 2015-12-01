@@ -1,3 +1,6 @@
+#ifndef _ROOTDIR_H_
+#define _ROOTDIR_H_
+
 #include <stdint.h>
 
 struct fat_fs_struct;
@@ -19,3 +22,5 @@ int rootDirectory_files(char* buf, int len);
 void root_format(void);
 char rootDirectory_files_stream(int reset);
 int root_delete(char* filename);
+
+#endif
