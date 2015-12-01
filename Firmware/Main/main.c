@@ -31,8 +31,10 @@
 #define ON  1
 #define OFF 0
 
-char RX_array1[512];
-char RX_array2[512];
+#define buf_size 512
+
+char RX_array1[buf_size];
+char RX_array2[buf_size];
 char log_array1 = 0;
 char log_array2 = 0;
 short RX_in = 0;
@@ -245,20 +247,20 @@ void feed(void)
 
 static void UART0ISR(void)
 {
-  if(RX_in < 512)
+  if(RX_in < buf_size)
   {
     RX_array1[RX_in] = U0RBR;
   
     RX_in++;
 
-    if(RX_in == 512) log_array1 = 1;
+    if(RX_in == buf_size) log_array1 = 1;
   }
-  else if(RX_in >= 512)
+  else if(RX_in >= buf_size)
   {
-    RX_array2[RX_in-512] = U0RBR;
+    RX_array2[RX_in-buf_size] = U0RBR;
     RX_in++;
 
-    if(RX_in == 1024)
+    if(RX_in == 2 * buf_size)
     {
       log_array2 = 1;
       RX_in = 0;
@@ -269,7 +271,6 @@ static void UART0ISR(void)
   U0IIR; // Have to read this to clear the interrupt 
 
   VICVectAddr = 0;  // Acknowledge interrupt
-  
 }
 
 static void UART0ISR_2(void)
@@ -1150,10 +1151,9 @@ void mode_0(void) // Auto UART mode
 {
   rprintf("MODE 0\n\r");
   setup_uart0(baud,1);
-  stringSize = 512;
+  stringSize = buf_size;
   mode_action();
   //rprintf("Exit mode 0\n\r");
-
 }
 
 void mode_1(void)
@@ -1245,14 +1245,14 @@ void mode_action(void)
     {
       VICIntEnClr = 0xFFFFFFFF;
 
-      if(RX_in < 512)
+      if(RX_in < buf_size)
       {
         fat_write_file(handle, (unsigned char *)RX_array1, RX_in);
         sd_raw_sync();
       }
-      else if(RX_in >= 512)
+      else if(RX_in >= buf_size)
       {
-        fat_write_file(handle, (unsigned char *)RX_array2, RX_in - 512);
+        fat_write_file(handle, (unsigned char *)RX_array2, RX_in - buf_size);
         sd_raw_sync();
       }
       while(1)
@@ -1266,7 +1266,6 @@ void mode_action(void)
       }
     }
   }
-
 }
 
 void test(void)
