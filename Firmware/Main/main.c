@@ -336,6 +336,21 @@ static int pushValue(char* q, int ind, int rawValue)
   }
 }
 
+static int sample(char* q, int ind, volatile unsigned long* ADxCR,
+                  volatile unsigned long* ADxDR, long l)
+{
+  int temp = 0;
+
+  *ADxCR = l;            // AD1.3
+  *ADxCR |= 0x01000000;  // start conversion
+  while ((temp & 0x80000000) == 0) {
+    temp = *ADxDR;
+  }
+  *ADxCR = 0x00000000;
+
+  return pushValue(q, ind, temp);
+}
+
 static void MODE2ISR(void)
 {
   int ind = 0;
@@ -354,114 +369,42 @@ static void MODE2ISR(void)
   // Get AD1.3
   if(ad1_3 == 'Y')
   {
-    int temp = 0;
-    AD1CR = 0x00020FF08; // AD1.3
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    AD1CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD1CR, &AD1DR, 0x00020FF08);
   }
   // Get AD0.3
   if(ad0_3 == 'Y')
   {
-    int temp = 0;
-    AD0CR = 0x00020FF08; // AD0.3
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    AD0CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF08);
   }
   // Get AD0.2
   if(ad0_2 == 'Y')
   {
-    int temp = 0;
-    AD0CR = 0x00020FF04; // AD1.2
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    AD0CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF04);
   }
   // Get AD0.1
   if(ad0_1 == 'Y')
   {
-    int temp = 0;
-    AD0CR = 0x00020FF02; // AD0.1
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    AD0CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF02);
   }
   // Get AD1.2
   if(ad1_2 == 'Y')
   {
-    int temp = 0;
-    AD1CR = 0x00020FF04; // AD1.2
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    AD1CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF04);
   }
   // Get AD0.4
   if(ad0_4 == 'Y')
   {
-    int temp = 0;
-    AD0CR = 0x00020FF10; // AD0.4
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    AD0CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF10);
   }
   // Get AD1.7
   if(ad1_7 == 'Y')
   {
-    int temp = 0;
-    AD1CR = 0x00020FF80; // AD1.7
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    AD1CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF80);
   }
   // Get AD1.6
   if(ad1_6 == 'Y')
   {
-    int temp = 0;
-    AD1CR = 0x00020FF40; // AD1.3
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    AD1CR = 0x00000000;
-
-    ind = pushValue(q, ind, temp);
+    ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF40);
   }
   
   for(j = 0; j < ind; j++)
