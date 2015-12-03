@@ -315,13 +315,52 @@ static void UART0ISR_2(void)
 
   VICVectAddr = 0;
 }
-    
+
+static void pushValue(char* q, int ind, int temp2)
+{
+  if (asc == 'Y') {
+    char temp_buff[4];
+
+    itoa(temp2, 10, temp_buff);
+    if (temp_buff[0] >= 48 && temp_buff[0] <= 57) {
+      q[ind] = temp_buff[0];
+      ind++;
+    }
+    if (temp_buff[1] >= 48 && temp_buff[1] <= 57) {
+      q[ind] = temp_buff[1];
+      ind++;
+    }
+    if (temp_buff[2] >= 48 && temp_buff[2] <= 57) {
+      q[ind] = temp_buff[2];
+      ind++;
+    }
+    if (temp_buff[3] >= 48 && temp_buff[3] <= 57) {
+      q[ind] = temp_buff[3];
+      ind++;
+    }
+
+    q[ind] = 0;
+    ind++;
+    temp2 = 0;
+    temp_buff[0] = 0;
+    temp_buff[1] = 0;
+    temp_buff[2] = 0;
+    temp_buff[3] = 0;
+
+  } else if (asc == 'N') {
+    short a = ((short)temp2 & 0xFF00) / 0x00000100;
+    q[ind] = (char)a;
+
+    q[ind + 1] = (char)temp2 & 0xFF;
+    ind += 2;
+  }
+}
+
 static void MODE2ISR(void)
 {
   int temp = 0, temp2 = 0, ind = 0;
   int j;
-  short a;
-  char q[50], temp_buff[4];
+  char q[50];
 
 
   T0IR = 1; // reset TMR0 interrupt
@@ -346,48 +385,7 @@ static void MODE2ISR(void)
 
     AD1CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -405,48 +403,7 @@ static void MODE2ISR(void)
 
     AD0CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -464,48 +421,7 @@ static void MODE2ISR(void)
 
     AD0CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -523,48 +439,7 @@ static void MODE2ISR(void)
 
     AD0CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -582,48 +457,7 @@ static void MODE2ISR(void)
 
     AD1CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -641,48 +475,7 @@ static void MODE2ISR(void)
 
     AD0CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -700,48 +493,7 @@ static void MODE2ISR(void)
 
     AD1CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
@@ -759,48 +511,7 @@ static void MODE2ISR(void)
 
     AD1CR = 0x00000000;
 
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-    }
+    pushValue(q, ind, temp2);
 
     temp = 0;
   }
