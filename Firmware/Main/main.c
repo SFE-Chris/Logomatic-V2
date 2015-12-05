@@ -316,7 +316,7 @@ static void UART0ISR_2(void)
   VICVectAddr = 0;
 }
 
-static void pushValue(char* q, int ind, int temp)
+static int pushValue(char* q, int ind, int temp)
 {
   int temp2 = (temp & 0xFFC0) / 0x40;
 
@@ -342,6 +342,8 @@ static void pushValue(char* q, int ind, int temp)
     q[ind + 1] = (char)temp2 & 0xFF;
     ind += 2;
   }
+
+  return ind;
 }
 
 static void MODE2ISR(void)
@@ -371,7 +373,7 @@ static void MODE2ISR(void)
     }
     AD1CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD0.3
   if(ad0_3 == 'Y')
@@ -385,7 +387,7 @@ static void MODE2ISR(void)
     }
     AD0CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD0.2
   if(ad0_2 == 'Y')
@@ -399,7 +401,7 @@ static void MODE2ISR(void)
     }
     AD0CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD0.1
   if(ad0_1 == 'Y')
@@ -413,7 +415,7 @@ static void MODE2ISR(void)
     }
     AD0CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD1.2
   if(ad1_2 == 'Y')
@@ -427,7 +429,7 @@ static void MODE2ISR(void)
     }
     AD1CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD0.4
   if(ad0_4 == 'Y')
@@ -441,7 +443,7 @@ static void MODE2ISR(void)
     }
     AD0CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD1.7
   if(ad1_7 == 'Y')
@@ -455,7 +457,7 @@ static void MODE2ISR(void)
     }
     AD1CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   // Get AD1.6
   if(ad1_6 == 'Y')
@@ -469,7 +471,7 @@ static void MODE2ISR(void)
     }
     AD1CR = 0x00000000;
 
-    pushValue(q, ind, temp);
+    ind = pushValue(q, ind, temp);
   }
   
   for(j = 0; j < ind; j++)
