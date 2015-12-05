@@ -374,14 +374,16 @@ static void MODE2ISR(void)
   }
 
 
-  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 3, ad1_3);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 3, ad0_3);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 2, ad0_2);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 1, ad0_1);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 2, ad1_2);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 4, ad0_4);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 7, ad1_7);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 6, ad1_6);
+#define SAMPLE(X, BIT) ind = sample(q, ind, &AD##X##CR, &AD##X##DR, 1 << BIT, ad##X##_##BIT)
+  SAMPLE(1, 3);
+  SAMPLE(0, 3);
+  SAMPLE(0, 2);
+  SAMPLE(0, 1);
+  SAMPLE(1, 2);
+  SAMPLE(0, 4);
+  SAMPLE(1, 7);
+  SAMPLE(1, 6);
+#undef SAMPLE
   
   for(j = 0; j < ind; j++)
   {
