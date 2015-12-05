@@ -316,34 +316,24 @@ static void UART0ISR_2(void)
   VICVectAddr = 0;
 }
 
-static int pushValue(char* q, int ind, int temp)
+static int pushValue(char* q, int ind, int rawValue)
 {
-  int temp2 = (temp & 0xFFC0) / 0x40;
+  // The lower six bits of the ADC result are undefined
+  // and are removed here.
+  int value = (unsigned short)rawValue >> 6;
+  char* p = q + ind;
 
-  if (asc == 'Y') {
-    int i;
-    char temp_buff[4] = { 0, 0, 0, 0 };
-
-    itoa(temp2, 10, temp_buff);
-
-    for (i = 0; i < 4; ++i) {
-      if (temp_buff[i] >= 48 && temp_buff[i] <= 57) {
-        q[ind] = temp_buff[i];
-        ind++;
-      }
-    }
-
-    q[ind] = 0;
-    ind++;
-  } else if (asc == 'N') {
-    short a = ((short)temp2 & 0xFF00) / 0x00000100;
-    q[ind] = (char)a;
-
-    q[ind + 1] = (char)temp2 & 0xFF;
-    ind += 2;
+  if (asc == 'Y') {  // ASCII
+    // itoa returns the number of bytes written excluding
+    // trailing '\0', hence the "+ 1"
+    return itoa(value, 10, p) + ind + 1;
+  } else if (asc == 'N') {  // binary
+    p[0] = value >> 8;
+    p[1] = value;
+    return ind + 2;
+  } else {  // invalid
+    return ind;
   }
-
-  return ind;
 }
 
 static void MODE2ISR(void)
