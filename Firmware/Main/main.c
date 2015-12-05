@@ -321,7 +321,7 @@ static void pushValue(char* q, int ind, int temp)
   int temp2 = (temp & 0xFFC0) / 0x40;
 
   if (asc == 'Y') {
-    char temp_buff[4];
+    char temp_buff[4] = { 0, 0, 0, 0 };
 
     itoa(temp2, 10, temp_buff);
     if (temp_buff[0] >= 48 && temp_buff[0] <= 57) {
