@@ -316,11 +316,8 @@ static void UART0ISR_2(void)
   VICVectAddr = 0;
 }
 
-static int pushValue(char* q, int ind, int rawValue)
+static int pushValue(char* q, int ind, int value)
 {
-  // The lower six bits of the ADC result are undefined
-  // and are removed here.
-  int value = (unsigned short)rawValue >> 6;
   char* p = q + ind;
 
   if(asc == 'Y') {  // ASCII
@@ -339,16 +336,20 @@ static int pushValue(char* q, int ind, int rawValue)
 static int sample(char* q, int ind, volatile unsigned long* ADxCR,
                   volatile unsigned long* ADxDR, long l)
 {
-  int temp = 0;
+  int value = 0;
 
-  *ADxCR = l;            // AD1.3
+  *ADxCR = l;
   *ADxCR |= 0x01000000;  // start conversion
-  while((temp & 0x80000000) == 0) {
-    temp = *ADxDR;
+  while((value & 0x80000000) == 0) {
+    value = *ADxDR;
   }
   *ADxCR = 0x00000000;
 
-  return pushValue(q, ind, temp);
+  // The upper ten of the lower sixteen bits of 'value' are the
+  // result. The result itself is unsigned. Hence a cast to
+  // 'unsigned short' yields the result with six bits of
+  // noise. Those are removed by the following shift operation.
+  return pushValue(q, ind, (unsigned short)value >> 6);
 }
 
 static void MODE2ISR(void)
