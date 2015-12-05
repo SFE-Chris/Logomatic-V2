@@ -334,13 +334,13 @@ static int pushValue(char* q, int ind, int value)
 }
 
 static int sample(char* q, int ind, volatile unsigned long* ADxCR,
-                  volatile unsigned long* ADxDR, long l, char adx_bit)
+                  volatile unsigned long* ADxDR, int mask, char adx_bit)
 {
   if(adx_bit == 'Y')
   {
     int value = 0;
 
-    *ADxCR = l;
+    *ADxCR = 0x00020FF00 | mask;
     *ADxCR |= 0x01000000;  // start conversion
     while((value & 0x80000000) == 0) {
       value = *ADxDR;
@@ -374,14 +374,14 @@ static void MODE2ISR(void)
   }
 
 
-  ind = sample(q, ind, &AD1CR, &AD1DR, 0x00020FF08, ad1_3);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF08, ad0_3);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF04, ad0_2);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF02, ad0_1);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF04, ad1_2);
-  ind = sample(q, ind, &AD0CR, &AD0DR, 0X00020FF10, ad0_4);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF80, ad1_7);
-  ind = sample(q, ind, &AD1CR, &AD1DR, 0X00020FF40, ad1_6);
+  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 3, ad1_3);
+  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 3, ad0_3);
+  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 2, ad0_2);
+  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 1, ad0_1);
+  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 2, ad1_2);
+  ind = sample(q, ind, &AD0CR, &AD0DR, 1 << 4, ad0_4);
+  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 7, ad1_7);
+  ind = sample(q, ind, &AD1CR, &AD1DR, 1 << 6, ad1_6);
   
   for(j = 0; j < ind; j++)
   {
