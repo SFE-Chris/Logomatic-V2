@@ -323,11 +323,11 @@ static int pushValue(char* q, int ind, int rawValue)
   int value = (unsigned short)rawValue >> 6;
   char* p = q + ind;
 
-  if (asc == 'Y') {  // ASCII
+  if(asc == 'Y') {  // ASCII
     // itoa returns the number of bytes written excluding
     // trailing '\0', hence the "+ 1"
     return itoa(value, 10, p) + ind + 1;
-  } else if (asc == 'N') {  // binary
+  } else if(asc == 'N') {  // binary
     p[0] = value >> 8;
     p[1] = value;
     return ind + 2;
@@ -343,7 +343,7 @@ static int sample(char* q, int ind, volatile unsigned long* ADxCR,
 
   *ADxCR = l;            // AD1.3
   *ADxCR |= 0x01000000;  // start conversion
-  while ((temp & 0x80000000) == 0) {
+  while((temp & 0x80000000) == 0) {
     temp = *ADxDR;
   }
   *ADxCR = 0x00000000;
