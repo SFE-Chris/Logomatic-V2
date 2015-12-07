@@ -156,6 +156,13 @@ Thumbs.db
 Desktop.ini
 
 
+############
+## Linux
+############
+
+# backup files (*.bak on Win)
+*~
+
 #############
 ## Python
 #############
