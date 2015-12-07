@@ -807,62 +807,62 @@ static void MODE2ISR(void)
   
   for(j = 0; j < ind; j++)
   {
-    if(RX_in < 512)
+    if(RX_in < buf_size)
     {
       RX_array1[RX_in] = q[j];
       RX_in++;
 
-      if(RX_in == 512) log_array1 = 1;
+      if(RX_in == buf_size) log_array1 = 1;
     }
-    else if(RX_in >= 512)
+    else if(RX_in >= buf_size)
     {
-      RX_array2[RX_in - 512] = q[j];
+      RX_array2[RX_in - buf_size] = q[j];
       RX_in++;
 
-      if(RX_in == 1024)
+      if(RX_in == 2 * buf_size)
       {
         log_array2 = 1;
         RX_in = 0;
       }
     }
   }
-  if(RX_in < 512)
+  if(RX_in < buf_size)
   {
     if(asc == 'N') { RX_array1[RX_in] = '$'; }
     else if(asc == 'Y'){ RX_array1[RX_in] = 13; }
     RX_in++;
 
-    if(RX_in == 512) log_array1 = 1;
+    if(RX_in == buf_size) log_array1 = 1;
   }
-  else if(RX_in >= 512)
+  else if(RX_in >= buf_size)
   {
     
-    if(asc == 'N') RX_array2[RX_in - 512] = '$';
-    else if(asc == 'Y'){ RX_array2[RX_in - 512] = 13; }
+    if(asc == 'N') RX_array2[RX_in - buf_size] = '$';
+    else if(asc == 'Y'){ RX_array2[RX_in - buf_size] = 13; }
     RX_in++;
     
-    if(RX_in == 1024)
+    if(RX_in == 2 * buf_size)
     {
       log_array2 = 1;
       RX_in = 0;
     }
   }
-  if(RX_in < 512)
+  if(RX_in < buf_size)
   {
     if(asc == 'N') RX_array1[RX_in] = '$';
     else if(asc == 'Y'){ RX_array1[RX_in] = 10; }
     RX_in++;
 
-    if(RX_in == 512) log_array1 = 1;
+    if(RX_in == buf_size) log_array1 = 1;
   }
-  else if(RX_in >= 512)
+  else if(RX_in >= buf_size)
   {
     
-    if(asc == 'N') RX_array2[RX_in - 512] = '$';
-    else if(asc == 'Y'){ RX_array2[RX_in - 512] = 10; }
+    if(asc == 'N') RX_array2[RX_in - buf_size] = '$';
+    else if(asc == 'Y'){ RX_array2[RX_in - buf_size] = 10; }
     RX_in++;
     
-    if(RX_in == 1024)
+    if(RX_in == 2 * buf_size)
     {
       log_array2 = 1;
       RX_in = 0;
