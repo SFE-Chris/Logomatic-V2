@@ -163,6 +163,13 @@ Desktop.ini
 # backup files (*.bak on Win)
 *~
 
+
+#############
+## Mac OS
+#############
+.DS_Store
+
+
 #############
 ## Python
 #############
@@ -194,8 +201,3 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-
-#############
-## Mac OS
-#############
-.DS_Store
