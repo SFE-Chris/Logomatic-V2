@@ -46,20 +46,20 @@ struct fat_file_struct * fd;
 char stringBuf[256];
 
 // Default Settings
-static char mode = 0;
-static char asc = 'N';
-static int baud = 9600;
-static int freq = 100;
-static char trig = '$';
+static char   mode = 0;
+static char    asc = 'N';
+static int    baud = 9600;
+static int    freq = 100;
+static char   trig = '$';
 static short frame = 100;
-static char ad1_7 = 'N';
-static char ad1_6 = 'N';
-static char ad1_3 = 'N';
-static char ad1_2 = 'N';
-static char ad0_4 = 'N';
-static char ad0_3 = 'N';
-static char ad0_2 = 'N';
-static char ad0_1 = 'N';
+static char  ad1_7 = 'N';
+static char  ad1_6 = 'N';
+static char  ad1_3 = 'N';
+static char  ad1_2 = 'N';
+static char  ad0_4 = 'N';
+static char  ad0_3 = 'N';
+static char  ad0_2 = 'N';
+static char  ad0_1 = 'N';
 
 
 /*******************************************************
@@ -276,9 +276,12 @@ static void UART0ISR(void)
 static void UART0ISR_2(void)
 {
   char temp;
-  temp = U0RBR;
+  temp = U0RBR; // Read a byte from UART0 receive buffer
 
-  if(temp == trig){ get_frame = 1; }
+  if(temp == trig)
+  {
+    get_frame = 1;
+  }
   
   if(get_frame)
   {
@@ -289,8 +292,9 @@ static void UART0ISR_2(void)
 
       if(RX_in == frame)
       {
-        RX_array1[RX_in] = 10; // delimiters
-        RX_array1[RX_in + 1] = 13;
+        // Delimiters
+        RX_array1[RX_in] = '\n';
+        RX_array1[RX_in + 1] = '\r';
         log_array1 = 1;
         get_frame = 0;
       }
@@ -302,8 +306,9 @@ static void UART0ISR_2(void)
 
       if(RX_in == 2*frame)
       {
-        RX_array2[RX_in - frame] = 10; // delimiters
-        RX_array2[RX_in + 1 - frame] = 13;
+        // Delimiters
+        RX_array2[RX_in - frame] = '\n';
+        RX_array2[RX_in + 1 - frame] = '\r';
         log_array2 = 1;
         get_frame = 0;
         RX_in = 0;
@@ -311,12 +316,12 @@ static void UART0ISR_2(void)
     }
   }
 
-  temp = U0IIR; // have to read this to clear the interrupt
+  temp = U0IIR; // Have to read this to clear the interrupt
 
-  VICVectAddr = 0;
+  VICVectAddr = 0;  // Acknowledge interrupt
 }
 
-static int pushValue(char* q, int ind, int value)
+static inline int pushValue(char* q, int ind, int value)
 {
   char* p = q + ind;
 
@@ -324,7 +329,7 @@ static int pushValue(char* q, int ind, int value)
   {
     // itoa returns the number of bytes written excluding
     // trailing '\0', hence the "+ 1"
-    return itoa(value, 10, p) + ind + 1;
+    return itoa(value, p, 10) + ind + 1;
   }
   else if(asc == 'N') // binary
   {
@@ -468,6 +473,8 @@ void FIQ_Routine(void)
   U0RBR;  // Trash oldest byte in UART0 Rx FiFO Why??
 
   U0IIR;  // Have to read this to clear the interrupt
+
+  // TODO: Should we be acking int here?
 }
 
 void SWI_Routine(void)
