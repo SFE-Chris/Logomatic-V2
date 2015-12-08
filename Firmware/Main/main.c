@@ -46,20 +46,20 @@ struct fat_file_struct * fd;
 char stringBuf[256];
 
 // Default Settings
-static char mode = 0;
-static char asc = 'N';
-static int baud = 9600;
-static int freq = 100;
-static char trig = '$';
+static char   mode = 0;
+static char    asc = 'N';
+static int    baud = 9600;
+static int    freq = 100;
+static char   trig = '$';
 static short frame = 100;
-static char ad1_7 = 'N';
-static char ad1_6 = 'N';
-static char ad1_3 = 'N';
-static char ad1_2 = 'N';
-static char ad0_4 = 'N';
-static char ad0_3 = 'N';
-static char ad0_2 = 'N';
-static char ad0_1 = 'N';
+static char  ad1_7 = 'N';
+static char  ad1_6 = 'N';
+static char  ad1_3 = 'N';
+static char  ad1_2 = 'N';
+static char  ad0_4 = 'N';
+static char  ad0_3 = 'N';
+static char  ad0_2 = 'N';
+static char  ad0_1 = 'N';
 
 
 /*******************************************************
@@ -276,9 +276,12 @@ static void UART0ISR(void)
 static void UART0ISR_2(void)
 {
   char temp;
-  temp = U0RBR;
+  temp = U0RBR; // Read a byte from UART0 receive buffer
 
-  if(temp == trig){ get_frame = 1; }
+  if(temp == trig)
+  {
+    get_frame = 1;
+  }
   
   if(get_frame)
   {
@@ -289,8 +292,9 @@ static void UART0ISR_2(void)
 
       if(RX_in == frame)
       {
-        RX_array1[RX_in] = 10; // delimiters
-        RX_array1[RX_in + 1] = 13;
+        // Delimiters
+        RX_array1[RX_in] = '\n';
+        RX_array1[RX_in + 1] = '\r';
         log_array1 = 1;
         get_frame = 0;
       }
@@ -302,8 +306,9 @@ static void UART0ISR_2(void)
 
       if(RX_in == 2*frame)
       {
-        RX_array2[RX_in - frame] = 10; // delimiters
-        RX_array2[RX_in + 1 - frame] = 13;
+        // Delimiters
+        RX_array2[RX_in - frame] = '\n';
+        RX_array2[RX_in + 1 - frame] = '\r';
         log_array2 = 1;
         get_frame = 0;
         RX_in = 0;
@@ -311,17 +316,65 @@ static void UART0ISR_2(void)
     }
   }
 
-  temp = U0IIR; // have to read this to clear the interrupt
+  temp = U0IIR; // Have to read this to clear the interrupt
 
-  VICVectAddr = 0;
+  VICVectAddr = 0;  // Acknowledge interrupt
 }
-    
+
+static inline int pushValue(char* q, int ind, int value)
+{
+  char* p = q + ind;
+
+  if(asc == 'Y') // ASCII
+  {
+    // itoa returns the number of bytes written excluding
+    // trailing '\0', hence the "+ 1"
+    return itoa(value, p, 10) + ind + 1;
+  }
+  else if(asc == 'N') // binary
+  {
+    p[0] = value >> 8;
+    p[1] = value;
+    return ind + 2;
+  }
+  else // invalid
+  {
+    return ind;
+  }
+}
+
+static int sample(char* q, int ind, volatile unsigned long* ADxCR,
+                  volatile unsigned long* ADxDR, int mask, char adx_bit)
+{
+  if(adx_bit == 'Y')
+  {
+    int value = 0;
+
+    *ADxCR = 0x00020FF00 | mask;
+    *ADxCR |= 0x01000000;  // start conversion
+    while((value & 0x80000000) == 0)
+    {
+      value = *ADxDR;
+    }
+    *ADxCR = 0x00000000;
+
+    // The upper ten of the lower sixteen bits of 'value' are the
+    // result. The result itself is unsigned. Hence a cast to
+    // 'unsigned short' yields the result with six bits of
+    // noise. Those are removed by the following shift operation.
+    return pushValue(q, ind, (unsigned short)value >> 6);
+  }
+  else
+  {
+    return ind;
+  }
+}
+
 static void MODE2ISR(void)
 {
-  int temp = 0, temp2 = 0, ind = 0;
+  int ind = 0;
   int j;
-  short a;
-  char q[50], temp_buff[4];
+  char q[50];
 
 
   T0IR = 1; // reset TMR0 interrupt
@@ -332,478 +385,16 @@ static void MODE2ISR(void)
   }
 
 
-  // Get AD1.3
-  if(ad1_3 == 'Y')
-  {
-    AD1CR = 0x00020FF08; // AD1.3
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD1CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD0.3
-  if(ad0_3 == 'Y')
-  {
-    AD0CR = 0x00020FF08; // AD0.3
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD0CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD0.2
-  if(ad0_2 == 'Y')
-  {
-    AD0CR = 0x00020FF04; // AD1.2
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD0CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD0.1
-  if(ad0_1 == 'Y')
-  {
-    AD0CR = 0x00020FF02; // AD0.1
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD0CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD1.2
-  if(ad1_2 == 'Y')
-  {
-    AD1CR = 0x00020FF04; // AD1.2
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD1CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD0.4
-  if(ad0_4 == 'Y')
-  {
-    AD0CR = 0x00020FF10; // AD0.4
-    AD0CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD0DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD0CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD1.7
-  if(ad1_7 == 'Y')
-  {
-    AD1CR = 0x00020FF80; // AD1.7
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD1CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
-  // Get AD1.6
-  if(ad1_6 == 'Y')
-  {
-    AD1CR = 0x00020FF40; // AD1.3
-    AD1CR |= 0x01000000; // start conversion
-    while((temp & 0x80000000) == 0)
-    {
-      temp = AD1DR;
-    }
-    temp &= 0x0000FFC0;
-    temp2 = temp / 0x00000040;
-
-    AD1CR = 0x00000000;
-
-    if(asc == 'Y')
-    {
-      itoa(temp2, 10, temp_buff);
-      if(temp_buff[0] >= 48 && temp_buff[0] <= 57)
-      {
-        q[ind] = temp_buff[0];
-        ind++;
-      }
-      if(temp_buff[1] >= 48 && temp_buff[1] <= 57)
-      {
-        q[ind] = temp_buff[1];
-        ind++;
-      }
-      if(temp_buff[2] >= 48 && temp_buff[2] <= 57)
-      {
-        q[ind] = temp_buff[2];
-        ind++;
-      }
-      if(temp_buff[3] >= 48 && temp_buff[3] <= 57)
-      {
-        q[ind] = temp_buff[3];
-        ind++;
-      }
-
-      q[ind] = 0;
-      ind++;
-      temp = 0; 
-      temp2 = 0;
-      temp_buff[0] = 0;
-      temp_buff[1] = 0;
-      temp_buff[2] = 0;
-      temp_buff[3] = 0;
-
-    }
-
-    else if(asc == 'N')
-    {
-      a = ((short)temp2 & 0xFF00) / 0x00000100;
-      q[ind] = (char)a;
-      
-      q[ind+1]  = (char)temp2 & 0xFF;
-      ind += 2;
-      temp = 0;
-    }
-  }
+#define SAMPLE(X, BIT) ind = sample(q, ind, &AD##X##CR, &AD##X##DR, 1 << BIT, ad##X##_##BIT)
+  SAMPLE(1, 3);
+  SAMPLE(0, 3);
+  SAMPLE(0, 2);
+  SAMPLE(0, 1);
+  SAMPLE(1, 2);
+  SAMPLE(0, 4);
+  SAMPLE(1, 7);
+  SAMPLE(1, 6);
+#undef SAMPLE
   
   for(j = 0; j < ind; j++)
   {
@@ -882,6 +473,8 @@ void FIQ_Routine(void)
   U0RBR;  // Trash oldest byte in UART0 Rx FiFO Why??
 
   U0IIR;  // Have to read this to clear the interrupt
+
+  // TODO: Should we be acking int here?
 }
 
 void SWI_Routine(void)
