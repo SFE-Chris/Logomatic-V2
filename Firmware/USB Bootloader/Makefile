@@ -42,6 +42,7 @@ SRC += system.c
 SRC += $(LIBPATH)syscalls.c 
 SRC += $(LIBPATH)rprintf.c 
 SRC += $(LIBPATH)serial.c
+SRC += $(LIBPATH)delay.c
 
 #Functions for bootloading
 SRC += $(LIBPATH)firmware.c
