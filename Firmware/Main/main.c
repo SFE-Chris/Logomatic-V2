@@ -780,7 +780,7 @@ void mode_2(void)
 
   T0TCR = 0x00000001; // enable timer
 
-  stringSize = 512;
+  stringSize = buf_size;
   mode_action();
 }
 
