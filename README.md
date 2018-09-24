@@ -14,9 +14,14 @@ Repository Contents
 * **/Hardware** - All Eagle design files (.brd, .sch)
 * **/Production** - Test bed files and production panel files
 
+Documentation
+--------------
+* **[Hookup Guide](https://learn.sparkfun.com/tutorials/logomatic-hookup-guide/)** - Basic hookup guide for the Logomatic v2.
+
 Product Versions
 ----------------
-* [WIG-10216](https://www.sparkfun.com/products/10216)- Logomatic v2 with miniB USB connector and FAT16 programming. 
+* [WIG-12772](https://www.sparkfun.com/products/12772)- Logomatic v2 with micro-B USB connector and FAT32 programming. 
+* *[WIG-10216 (RETIRED)](https://www.sparkfun.com/products/10216)- Logomatic v2 with mini-B USB connector and FAT16 programming.*
 
 License Information
 -------------------
